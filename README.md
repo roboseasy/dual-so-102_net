@@ -284,7 +284,6 @@ Physical Labs 앱이 이 폴더를 찾아 스크립트를 부르고 출력을 �
 |---|---|---|
 | 로봇 `~/dualso102_net` | [roboseasy/dualso102_net](https://github.com/roboseasy/dualso102_net) (이 저장소) | 와이파이 · AP 전환 |
 | 로봇 `~/workspace/lerobot` | [huggingface/lerobot](https://github.com/huggingface/lerobot) | 팔 구동 (팔로워 호스트) |
-| 로봇 `~/workspace/dual_a-ba_edu` | [roboseasy-members/dual_a-ba_edu](https://github.com/roboseasy-members/dual_a-ba_edu) | 교육용 양팔 코드 |
 | PC (원본) | [roboseasy/lekiwi_net](https://github.com/roboseasy/lekiwi_net) | 이 저장소 스크립트의 원본 (LeKiwi) |
 
 로봇에 받는 법 (공개 저장소라 인증이 필요 없다):
