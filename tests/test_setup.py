@@ -54,7 +54,7 @@ def test_setup_opens_updates_only_while_installing(tree: RobotTree) -> None:
 	assert calls[-1] == 'apt-get update -qq | src: no pin: no'          # 닫은 뒤 목록을 원래대로
 	assert not (tree.root / SRC).exists() and not (tree.root / PIN).exists()
 	assert tree.text(CLOUD) == 'network: {config: disabled}\n'
-	assert tree.keyfile('dualso102-ap').get('wifi', 'ssid') == 'dualso102'
+	assert tree.keyfile('dualso102-ap').get('wifi', 'ssid') == 'dualso102-01'
 	assert tree.keyfile('home-wifi').get('connection', 'autoconnect') == 'false'     # --mode ap
 	assert tree.keyfile('home-wifi').get('ipv4', 'method') == 'auto'                 # --dhcp
 	assert 'apt-mark hold network-manager' in tree.calls()                           # --hold-nm

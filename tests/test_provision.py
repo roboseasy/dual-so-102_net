@@ -131,7 +131,7 @@ class RobotTree:
 			'etc/networkd-dispatcher/routable.d/50-kit-ip': ('#!/usr/bin/env bash\nexit 0\n', 0o755),
 			'etc/systemd/system/wifi-powersave-off.service': ('[Service]\nType=oneshot\n', 0o644),
 			'etc/kit-number': ('4\n', 0o644),
-			'etc/hostname': ('dualso10204\n', 0o644),
+			'etc/hostname': ('dualso102-04\n', 0o644),
 			'etc/modprobe.d/blacklist.conf': ('blacklist x\n', 0o644),
 			f'{HOME[1:]}/set_wifi.sh': ('#!/bin/bash\necho old\n', 0o755),
 			f'{HOME[1:]}/set_ip.sh': ('#!/bin/bash\necho old\n', 0o755),
@@ -255,11 +255,11 @@ def test_provision_router_psk_goes_to_keyfile_only(tree: RobotTree) -> None:
 		assert rel in names
 
 
-def test_provision_default_ap_is_dualso102(tree: RobotTree) -> None:
-	"""처음 AP는 모든 로봇이 이름 dualso102 · 비밀번호 dualso102 (사용자 결정, R25). 고객이 바꾼다."""
+def test_provision_default_ap_is_dualso102_01(tree: RobotTree) -> None:
+	"""처음 AP는 모든 로봇이 이름 dualso102-01 · 비밀번호 dualso102-01 (사용자 결정, R25). 고객이 바꾼다."""
 	done = ok(tree.provision('--kit', '4'))
 	ap = tree.keyfile('dualso102-ap')
-	assert (ap.get('wifi', 'ssid'), ap.get('wifi-security', 'psk')) == ('dualso102', 'dualso102')
+	assert (ap.get('wifi', 'ssid'), ap.get('wifi-security', 'psk')) == ('dualso102-01', 'dualso102-01')
 	assert not (tree.root / 'run/dualso102-ap-password').exists()
 	assert 'dualso102-ap-password' not in done.stdout
 
@@ -296,16 +296,16 @@ def nmcli_offline_ok() -> bool:
 @pytest.mark.skipif(not nmcli_offline_ok(), reason='nmcli --offline (1.46 이상)이 없다')
 def test_keyfile_templates_match_nmcli_offline(tree: RobotTree) -> None:
 	ok(tree.provision('--kit', '4'))
-	ap_password = 'dualso102'                                          # 처음 AP: 이름과 같은 공개 기본값
+	ap_password = 'dualso102-01'                                          # 처음 AP: 이름과 같은 공개 기본값
 	references = {
-		'dualso102-ap': nmcli_reference('con-name', 'dualso102-ap', 'ssid', 'dualso102', '802-11-wireless.mode', 'ap',
+		'dualso102-ap': nmcli_reference('con-name', 'dualso102-ap', 'ssid', 'dualso102-01', '802-11-wireless.mode', 'ap',
 			'802-11-wireless.band', 'bg', '802-11-wireless.channel', '6', 'wifi-sec.key-mgmt', 'wpa-psk',
 			'wifi-sec.proto', 'rsn', 'wifi-sec.pairwise', 'ccmp', 'wifi-sec.group', 'ccmp', 'wifi-sec.psk', ap_password,
 			'ipv4.method', 'shared', 'ipv4.addresses', '192.168.4.1/24', 'ipv6.method', 'disabled',
 			'connection.autoconnect-priority', '0'),
 		'home-wifi': nmcli_reference('con-name', 'home-wifi', 'ssid', 'roboseasy', '802-11-wireless.mode',
 			'infrastructure', 'wifi-sec.key-mgmt', 'wpa-psk', 'wifi-sec.psk', ROUTER_PSK, 'ipv4.method', 'manual',
-			'ipv4.addresses', '192.168.0.204/24', 'ipv4.gateway', '192.168.0.1', 'ipv4.dns', '8.8.8.8 1.1.1.1',
+			'ipv4.addresses', '192.168.0.104/24', 'ipv4.gateway', '192.168.0.1', 'ipv4.dns', '8.8.8.8 1.1.1.1',
 			'ipv6.method', 'disabled', 'connection.autoconnect-priority', '10'),
 	}
 	defaults = {('connection', 'autoconnect', 'true'), ('connection', 'autoconnect-priority', '0')}
@@ -474,9 +474,9 @@ def test_provision_appends_bashrc_block_once(tree: RobotTree) -> None:
 
 
 @pytest.mark.parametrize('args, address', [
-	(('--kit', '4'), '192.168.0.204/24,192.168.0.1'),
-	(('--kit', '7'), '192.168.0.207/24,192.168.0.1'),
-	((), '192.168.0.204/24,192.168.0.1'),                     # /etc/kit-number
+	(('--kit', '4'), '192.168.0.104/24,192.168.0.1'),
+	(('--kit', '7'), '192.168.0.107/24,192.168.0.1'),
+	((), '192.168.0.104/24,192.168.0.1'),                     # /etc/kit-number
 	(('--dhcp',), None),
 ])
 def test_provision_fixed_ip_from_kit(tree: RobotTree, args: tuple[str, ...], address: str | None) -> None:
@@ -491,14 +491,14 @@ def test_provision_fixed_ip_from_kit(tree: RobotTree, args: tuple[str, ...], add
 def test_provision_ap_mode(tree: RobotTree) -> None:
 	ok(tree.provision('--mode', 'ap', FAKE_ACTIVE='dualso102-ap'))
 	assert tree.keyfile('home-wifi').get('connection', 'autoconnect') == 'false'
-	assert tree.keyfile('dualso102-ap').get('wifi', 'ssid') == 'dualso102'
+	assert tree.keyfile('dualso102-ap').get('wifi', 'ssid') == 'dualso102-01'
 	assert 'nmcli con up dualso102-ap' in tree.calls()
 
 
 @pytest.mark.parametrize('args', [
 	('--mode', 'x'), ('--kit', '0'), ('--kit', '55'), ('--kit', 'a'), ('--kit', '4', '--dhcp'), ('--ap-ssid', ''),
-	('--ap-ssid', 'a' * 33), ('--ap-ssid', ' dualso10204'), ('--ap-ssid', 'a\nb'), ('--bogus',), ('--kit',),
-	('--ap-ssid', 'dualso7'), ('--ap-ssid', '로봇이름입니다'),                 # 비밀번호도 되므로 8자 이상 ASCII
+	('--ap-ssid', 'a' * 33), ('--ap-ssid', ' dualso102-04'), ('--ap-ssid', 'a\nb'), ('--bogus',), ('--kit',),
+	('--ap-ssid', 'dual-07'), ('--ap-ssid', '로봇이름입니다'),                 # 비밀번호도 되므로 8자 이상 ASCII
 ])
 def test_provision_rejects_bad_arguments(tree: RobotTree, args: tuple[str, ...]) -> None:
 	before = tree_state(tree.root)

@@ -1,6 +1,6 @@
 #!/bin/bash
 # home-wifi(공유기) 의 IPv4 를 바꾸고 적용한다 — set_ip.sh / set_dhcp.sh 공용.
-#   _apply_home_ipv4.sh manual 192.168.0.203
+#   _apply_home_ipv4.sh manual 192.168.0.103
 #   _apply_home_ipv4.sh auto
 # - 공유기 모드(home-wifi 활성)면 바로 다시 연결해 IP 를 확인하고, 실패하면 이전 설정으로 되돌린다
 #   (되돌리기도 실패하면 AP 로 복귀 — 파이에 닿을 길을 남긴다).

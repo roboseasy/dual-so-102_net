@@ -3,13 +3,13 @@
 # netplan apply가 eth0의 DHCP를 다시 한다 (유선 ssh가 잠깐 끊길 수 있어 setsid nohup으로 돌린다, 구현계획서 P2.4).
 #   sudo provision_ap_mode.sh [--dry-run] [--mode wifi|ap] [--ap-ssid NAME] [--kit N | --dhcp] [--hold-nm]
 #     --mode wifi  공유기 우선 (못 붙으면 AP로 뜬다, 기본) / --mode ap  AP 고정
-#     --ap-ssid    처음 AP 이름이자 비밀번호 (기본 dualso102: 모든 로봇이 같고 고객이 바꾼다, 8~32자 ASCII)
-#     --kit N      공유기 고정 주소 192.168.0.(200+N) (기본: /etc/kit-number) / --dhcp  공유기에서 DHCP
+#     --ap-ssid    처음 AP 이름이자 비밀번호 (기본 dualso102-01: 모든 로봇이 같고 고객이 바꾼다, 8~32자 ASCII)
+#     --kit N      공유기 고정 주소 192.168.0.(100+N) (기본: /etc/kit-number) / --dhcp  공유기에서 DHCP
 #     --hold-nm    apt-mark hold network-manager
 # 종료: 0 성공 · 이미 적용됨 / 3 사전 점검에서 거절 (아무것도 안 바뀜) / 4 바꾼 뒤 실패 (롤백함)
 #   / 5 바꾼 뒤 실패했고 롤백도 다 되지 않음 (유선으로 들어와 고친다). 신호(INT · TERM · HUP)로 멈춰도 롤백한다.
 # 백업 /var/backups/dualso102_net_*.tar.gz 에는 공유기 비밀번호가 있다: PC로 옮겨 sha256을 맞춘 뒤 로봇에서 지운다.
-# 처음 AP는 이름 = 비밀번호 = dualso102 (사용자 결정: 공개된 기본값이라 숨길 것이 없다, 기획서 R25).
+# 처음 AP는 이름 = 비밀번호 = dualso102-01 (사용자 결정: 공개된 기본값이라 숨길 것이 없다, 기획서 R25).
 # 시험용 환경변수: PROVISION_ROOT (모든 절대 경로 앞에 붙는다. 있으면 root 확인을 건너뛴다),
 #   PROVISION_USER (기본 $SUDO_USER), PROVISION_HOME (기본 그 사용자의 홈)
 set -euo pipefail
@@ -75,7 +75,7 @@ strip_wifis() {   # strip_wifis FILE: `wifis:` 줄과 그보다 깊이 들여쓴
 }
 new_uuid() { python3 -c 'import uuid; print(uuid.uuid4())'; }
 
-DRY=''; MODE=wifi; AP_SSID=dualso102; KIT=''; DHCP=''; HOLD_NM=''
+DRY=''; MODE=wifi; AP_SSID=dualso102-01; KIT=''; DHCP=''; HOLD_NM=''
 while [ $# -gt 0 ]; do
 	case "$1" in
 	--dry-run) DRY=1 ;;
@@ -163,7 +163,7 @@ fi
 
 BACKUP_NAME="dualso102_net_$(date +%Y%m%d-%H%M%S).tar.gz"
 WANT=home-wifi; [ "$MODE" = wifi ] || WANT=dualso102-ap
-if [ -n "$DHCP" ]; then IP_DESC='DHCP'; else IP_DESC="고정 192.168.0.$((200 + KIT))"; fi
+if [ -n "$DHCP" ]; then IP_DESC='DHCP'; else IP_DESC="고정 192.168.0.$((100 + KIT))"; fi
 STEPS=(
 	"사전 점검: 통과 (eth0 $ETH0_ADDR, netplan에서 공유기 정보를 읽음)"
 	"백업: /var/backups/$BACKUP_NAME (root 600, 공유기 비밀번호 포함: PC로 옮긴 뒤 지운다)"
@@ -246,7 +246,7 @@ if [ -n "$DHCP" ]; then
 	IPV4='method=auto'
 else
 	IPV4="method=manual
-address1=192.168.0.$((200 + KIT))/24,192.168.0.1
+address1=192.168.0.$((100 + KIT))/24,192.168.0.1
 dns=8.8.8.8;1.1.1.1;"
 fi
 put 600 "$KFDIR/dualso102-ap.nmconnection" <<EOF

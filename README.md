@@ -34,7 +34,7 @@ NetworkManager(`nmcli`) 프로필 2개(`dualso102-ap`, `home-wifi`)로 동작한
 | `run_ap.sh` | wlan0를 **AP 모드**로. 재부팅해도 유지. 로봇 IP `192.168.4.1` |
 | `run_wifi.sh` | wlan0를 **공유기 모드**로. 인자 없이 = 저장된 공유기로 연결, `SSID PASSWORD` = 새 공유기 저장(DHCP) 후 연결. 연결 실패 시 AP로 복귀 |
 | `set_ap.sh` | AP 이름 · 비밀번호 변경. 인자 없이 = 현재 AP 이름 보기 |
-| `set_ip.sh` | 공유기 모드의 **고정 IP** 설정: `192.168.0.(200 + 킷 번호)`. 인자 없이 = 현재 설정 보기 |
+| `set_ip.sh` | 공유기 모드의 **고정 IP** 설정: `192.168.0.(100 + 킷 번호)`. 인자 없이 = 현재 설정 보기 |
 | `set_dhcp.sh` | 공유기 모드를 **DHCP**로 되돌린다 |
 | `_apply_home_ipv4.sh` | `set_ip.sh` · `set_dhcp.sh`가 같이 쓰는 내부 스크립트. 직접 부르지 않는다 |
 | `wifi_list.sh` | 주변 와이파이 목록 (SSID · 신호 · 대역 · 보안). `iw`로 스캔하므로 NetworkManager와 무관 |
@@ -80,14 +80,14 @@ run_wifi MyRouter MyPassword   # 공유기 모드: 처음 한 번 저장 + 연�
 run_wifi                       # 이후: 저장된 공유기로 연결
 
 setip                          # 공유기 모드의 IP 설정 보기
-setip 3                        # 192.168.0.203 으로 고정 (킷 번호 1~54)
+setip 3                        # 192.168.0.103 으로 고정 (킷 번호 1~54)
 setdhcp                        # 공유기가 주는 주소를 받는다
 
 set_ap                         # 현재 AP 이름 보기
 set_ap MyDualArm MyPassword    # AP 이름(1~32바이트) · 비밀번호(8~63자) 변경
 ```
 
-- **처음 AP는 이름 · 비밀번호 모두 `dualso102`** 이다 (LeKiwi의 `lekiwi01`과 같은 정책: 모든 로봇이 같고 받은 사람이 `set_ap`로 바꾼다).
+- **처음 AP는 이름 · 비밀번호 모두 `dualso102-01`** 이다 (LeKiwi의 `lekiwi01`과 같은 정책: 모든 로봇이 같고 받은 사람이 `set_ap`로 바꾼다).
 - 공유기 비밀번호는 8~63자 (WPA2). SSID · 비밀번호 앞뒤에 공백을 둘 수 없다.
 - 새 공유기를 저장하면 **고정 IP 설정은 DHCP로 초기화**된다. 고정 IP가 필요하면 이어서 `setip N`.
 - 공유기 연결에 실패하면 자동으로 AP 모드로 돌아와서, 로봇에 닿을 길이 끊기지 않는다.
@@ -125,8 +125,8 @@ sudo systemctl stop dualso102-net-rollback.timer
 | 인자 | 뜻 |
 |---|---|
 | `--mode ap` / `--mode wifi` | AP 고정 / 공유기 우선(못 붙으면 AP). 공유기가 근처에 없으면 `--mode wifi`는 실패해 되돌려진다 |
-| `--dhcp` / `--kit N` | 공유기 모드에서 DHCP / 고정 `192.168.0.(200+N)` |
-| `--ap-ssid NAME` | 처음 AP 이름이자 비밀번호 (기본 `dualso102`, 8~32자 ASCII) |
+| `--dhcp` / `--kit N` | 공유기 모드에서 DHCP / 고정 `192.168.0.(100+N)` |
+| `--ap-ssid NAME` | 처음 AP 이름이자 비밀번호 (기본 `dualso102-01`, 8~32자 ASCII) |
 | `--hold-nm` | `apt-mark hold network-manager` (판이 올라가 동작이 바뀌는 것을 막는다) |
 | `--dry-run` | 사전 점검과 할 일 목록만 |
 
@@ -205,21 +205,26 @@ Physical Labs 앱이 `run_wifi.sh` · `set_ip.sh` · `set_dhcp.sh`의 출력을 
 
 ## 9. 원본(lekiwi_net)과 맞추기
 
-원본이 바뀌면 같은 규칙으로 다시 가져온다 (파일별로 `sed` 한 줄, 순서가 중요하다).
+원본이 바뀌면 `sync_from_lekiwi.sh`로 다시 만든다 (PC에서). 원본 커밋은 `LEKIWI_NET_SYNCED`에 적힌다.
 
 ```bash
-sed -e 's/lekiwi7/dualso7/g' -e 's/lekiwi01/dualso102/g' -e 's/LEKIWI/DUALSO102/g' \
-    -e 's/MyLeKiwi/MyDualArm/g' -e 's/LeKiwi/Dual SO-102/g' -e 's/lekiwi/dualso102/g'
+./sync_from_lekiwi.sh [lekiwi_net 경로]           # 기본 ~/workspace/lekiwi-repo/lekiwi_net
+git diff                                          # 바뀐 줄 확인
+python3 -m pytest -q
+./sync_from_lekiwi.sh --check                     # 생성물을 손으로 고쳤는지 확인 (다르면 종료 1)
 ```
+
+이름 치환표(`RENAME`)와 치환만으로 뜻이 바뀌는 곳의 덮어쓰기(`fix`)는 스크립트 안에 있다. 원본이 바뀌어 덮어쓰기가 맞지 않거나 치환 뒤 `lekiwi`가 남으면 멈춘다.
 
 | 원본 | 여기 |
 |---|---|
 | 폴더 `~/lekiwi_net`, 프로필 `lekiwi-ap` | `~/dualso102_net`, `dualso102-ap` |
 | 상태 폴더 `/var/lib/lekiwi-net`, 표지 `/etc/lekiwi-net-provisioned` | `/var/lib/dualso102-net`, `/etc/dualso102-net-provisioned` |
 | 백업 `/var/backups/lekiwi_net_*.tar.gz`, 타이머 `lekiwi-net-rollback` | `/var/backups/dualso102_net_*.tar.gz`, `dualso102-net-rollback` |
-| 처음 AP `lekiwi01` | `dualso102` |
+| 호스트 이름 `lekiwiNN`, 처음 AP `lekiwi01` | `dualso102-NN`, `dualso102-01` |
+| 공유기 고정 IP `192.168.0.(200+N)` (`.201`~`.254`) | `192.168.0.(100+N)` (`.101`~`.154`) — 같은 공유기에 LeKiwi와 같이 붙어도 겹치지 않는다 |
 
-이 저장소에만 있는 것: `setup_ap_mode.sh`, `tests/test_setup.py`, 이 README. 원본에서 가져온 파일은 손으로 고치지 않는다 (고칠 일이 있으면 원본에서).
+이 저장소에만 있는 것: `setup_ap_mode.sh`, `tests/test_setup.py`, `sync_from_lekiwi.sh`, `LEKIWI_NET_SYNCED`, 이 README. 원본에서 가져온 파일은 손으로 고치지 않는다 (고칠 일이 있으면 원본에서).
 
 ---
 

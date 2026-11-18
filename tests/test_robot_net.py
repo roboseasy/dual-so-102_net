@@ -73,7 +73,7 @@ case " $* " in
 *)
 	for d in eth0 wlan0; do
 		[ -z "$dev" ] || [ "$dev" = "$d" ] || continue
-		if [ "$d" = eth0 ]; then addr=${FAKE_ETH0_ADDR-10.42.0.195/24}; else addr=${FAKE_WLAN0_ADDR-192.168.0.204/24}; fi
+		if [ "$d" = eth0 ]; then addr=${FAKE_ETH0_ADDR-10.42.0.195/24}; else addr=${FAKE_WLAN0_ADDR-192.168.0.104/24}; fi
 		[ -n "$addr" ] || continue
 		case " $* " in
 		*' -br '*) echo "$d UP $addr" ;;
@@ -196,7 +196,7 @@ def test_nm_kf_set_doubles_backslash(fake_bin: FakeBin, tmp_path: Path) -> None:
 def test_nm_kf_del_and_missing(fake_bin: FakeBin, tmp_path: Path) -> None:
 	kf_dir = tmp_path / 'kf'
 	kf_dir.mkdir()
-	nm_kf(fake_bin, kf_dir, 'set', 'home-wifi', 'ipv4', 'method', 'manual', 'ipv4', 'address1', '192.168.0.204/24')
+	nm_kf(fake_bin, kf_dir, 'set', 'home-wifi', 'ipv4', 'method', 'manual', 'ipv4', 'address1', '192.168.0.104/24')
 	assert nm_kf(fake_bin, kf_dir, 'del', 'home-wifi', 'ipv4', 'address1').returncode == 0
 	gone = nm_kf(fake_bin, kf_dir, 'get', 'home-wifi', 'ipv4', 'address1')
 	assert (gone.returncode, gone.stdout) == (0, '\n')
@@ -226,7 +226,7 @@ autoconnect-priority=0
 
 [wifi]
 mode=ap
-ssid=dualso10204
+ssid=dualso102-04
 band=bg
 channel=6
 
@@ -263,7 +263,7 @@ psk=FAKEPSK-12345
 
 [ipv4]
 method=manual
-address1=192.168.0.204/24,192.168.0.1
+address1=192.168.0.104/24,192.168.0.1
 dns=8.8.8.8;1.1.1.1;
 
 [ipv6]
@@ -314,11 +314,11 @@ def index_of(lines: list[str], text: str) -> int:
 
 
 @pytest.mark.parametrize('args', [
-	('dualso10207', 'abc1234'),                 # 비밀번호 7자
-	('dualso10207', 'a' * 64),                  # 64자
-	('dualso10207', 'abcd\n1234'),              # 줄바꿈
+	('dualso102-07', 'abc1234'),                 # 비밀번호 7자
+	('dualso102-07', 'a' * 64),                  # 64자
+	('dualso102-07', 'abcd\n1234'),              # 줄바꿈
 	('dualso102\n07', 'abcd1234'),
-	('dualso10207', 'abcd1234\r'),
+	('dualso102-07', 'abcd1234\r'),
 	('가' * 11, 'abcd1234'),                  # 33 바이트
 	('', 'abcd1234'),                        # 빈 이름
 ])
@@ -338,14 +338,14 @@ def test_set_ap_writes_keyfile_and_loads(robot: Robot) -> None:
 	assert f'con load {robot.kf_dir}/dualso102-ap.nmconnection' in robot.nmcli()
 	assert not [line for line in robot.nmcli() if 'modify' in line]
 	assert 'con up dualso102-ap' not in robot.nmcli()              # AP가 꺼져 있으면 다시 올리지 않는다
-	assert robot.run('set_ap.sh', 'dualso10204', 'abcd1234', FAKE_ACTIVE='dualso102-ap').returncode == 0
+	assert robot.run('set_ap.sh', 'dualso102-04', 'abcd1234', FAKE_ACTIVE='dualso102-ap').returncode == 0
 	assert 'con up dualso102-ap' in robot.nmcli()
 
 
 def test_set_ap_without_args_prints_ssid_only(robot: Robot) -> None:
 	done = robot.run('set_ap.sh')
 	assert done.returncode == 0
-	assert 'dualso10204' in done.stdout
+	assert 'dualso102-04' in done.stdout
 	assert 'FAKEAPPSK' not in done.stdout + done.stderr
 
 
@@ -469,7 +469,7 @@ def test_set_ip_writes_fixed_address(robot: Robot) -> None:
 	done = robot.run('set_ip.sh', '4', FAKE_ACTIVE='home-wifi')
 	assert done.returncode == 0, done.stdout + done.stderr
 	assert robot.get('home-wifi', 'ipv4', 'method') == 'manual'
-	assert robot.get('home-wifi', 'ipv4', 'address1') == '192.168.0.204/24,192.168.0.1'
+	assert robot.get('home-wifi', 'ipv4', 'address1') == '192.168.0.104/24,192.168.0.1'
 	assert robot.get('home-wifi', 'ipv4', 'dns') == '8.8.8.8;1.1.1.1;'
 	assert not (robot.state_dir / 'home-wifi.prev').exists()
 
@@ -505,7 +505,7 @@ def test_switch_scripts_only_touch_paths_inside_tmp(robot: Robot, tmp_path: Path
 	robot.run('set_ip.sh', '4', FAKE_ACTIVE='home-wifi')
 	robot.run('set_dhcp.sh', FAKE_ACTIVE='home-wifi', FAKE_HOME_UP_FAILS='1')
 	robot.run('run_ap.sh', FAKE_AP_UP_FAILS='1')
-	robot.run('set_ap.sh', 'dualso10204', 'abcd1234', FAKE_ACTIVE='dualso102-ap')
+	robot.run('set_ap.sh', 'dualso102-04', 'abcd1234', FAKE_ACTIVE='dualso102-ap')
 	paths = [word for line in robot.fake.calls() for word in line.split() if word.startswith('/')]
 	assert paths
 	outside = [path for path in paths if not path.startswith((str(tmp_path), str(ROBOT_NET)))]
