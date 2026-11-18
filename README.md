@@ -398,6 +398,7 @@ python3 -m pytest -q   # pytest 가 든 파이썬. libnm 시험 하나는 python
 |---|---|---|
 | 2026-11-14 | `roboseasy-pi01` (Dual SO-102 팔로워, Ubuntu 24.04) | `setup_ap_mode.sh` (기본 인자: AP 고정 · DHCP · NM hold) → 종료 0. NetworkManager `1.46.0-1ubuntu2.8`(hold) · dnsmasq-base `2.91`. 로봇 쪽 확인 20항목 PASS — 설치 직후 · 재부팅 뒤 · 앱의 [AP 모드 켜기] 뒤. PC 무선 스캔으로 채널 6 · WPA2 확인, `run_wifi`(공유기 범위 밖) 실패 → AP 복귀 확인. |
 | 2026-11-18 | `roboseasy-pi01` | `image_ready_check.sh` 읽기 전용 실행: FAIL 20 · WARN 14 (개발 카드라 정상 — 셸 기록 · cloud-init 사본 · 로그의 공유기 비밀번호, `.vscode-server` · `.copilot`). |
+| 2026-11-18 | `roboseasy-pi01` → **`dualso102-01`** | `~/dualso102_net` 을 `git clone`(0ab4672)으로 바꿈 (옛 폴더는 `~/dualso102_net_old`). `clone_init.sh dualso102-01 1 --ap-ssid dualso102-01 --ap-password dualso102-01` → 종료 0, 재부팅. 확인: 호스트 이름 · `/etc/kit-number` 1 · AP `dualso102-01` 채널 6 WPA2(PC 무선 스캔) · `192.168.4.1` · 유선 `10.42.0.78` 그대로 · `home-wifi` 고정 `192.168.0.101` 저장(AP 모드라 적용 전). `image_ready_check.sh`: FAIL 20 · WARN 11. `/etc/hosts` 의 `127.0.1.1` 줄에 옛 이름이 별칭으로 남는다 (cloud-init, LeKiwi 카드도 같다). |
 
 - 앱 계약 (2026-11-15): Physical Labs 앱이 보내는 스크립트(상태 읽기 · sudo 확인 · 와이파이 상태 · 스캔 · AP 켜기 · 로그 읽기)를
   이 로봇에서 그대로 실행해 앱의 파서로 읽었다 — 세대 `nm` · 모드 `ap` · AP 이름 `dualso102`(당시 처음 값) · `192.168.4.1/24`.
